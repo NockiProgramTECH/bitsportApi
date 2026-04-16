@@ -1,0 +1,47 @@
+[
+  {
+    "model": "markets.market",
+    "pk": "m1",
+    "fields": {
+      "title": "⚽ Amical : Burkina Faso vs Mali",
+      "event_date": "2026-05-25",
+      "option_a": "Burkina Faso vainqueur",
+      "option_b": "Mali vainqueur",
+      "price_a_sats": 55000,
+      "price_b_sats": 45000,
+      "resolved": false,
+      "winner_idx": null,
+      "created_at": "2026-04-10T12:00:00Z"
+    }
+  },
+  {
+    "model": "markets.market",
+    "pk": "m2",
+    "fields": {
+      "title": "🏆 CAN 2026 Qualif : Sénégal vs Côte d'Ivoire",
+      "event_date": "2026-06-10",
+      "option_a": "Sénégal vainqueur",
+      "option_b": "Côte d'Ivoire vainqueur",
+      "price_a_sats": 60000,
+      "price_b_sats": 40000,
+      "resolved": false,
+      "winner_idx": null,
+      "created_at": "2026-04-12T09:00:00Z"
+    }
+  },
+  {
+    "model": "markets.market",
+    "pk": "m3",
+    "fields": {
+      "title": "⚽ Ligue 1 BF : ASFA vs EFO",
+      "event_date": "2026-04-20",
+      "option_a": "ASFA Yennenga vainqueur",
+      "option_b": "Étoile Filante vainqueur",
+      "price_a_sats": 50000,
+      "price_b_sats": 50000,
+      "resolved": false,
+      "winner_idx": null,
+      "created_at": "2026-04-14T08:00:00Z"
+    }
+  }
+]

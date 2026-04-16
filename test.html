@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>BitSport Market – Paris sportifs en Bitcoin (Burkina Faso)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
+    <style>
+        * { font-family: 'Inter', sans-serif; }
+        body { background: #0B1120; }
+        .card-gradient { background: linear-gradient(135deg, #111827 0%, #0F172A 100%); border: 1px solid #1F2A44; }
+        .btn-primary { background: #F7931A; transition: all 0.2s ease; }
+        .btn-primary:hover { background: #E67E22; transform: translateY(-1px); }
+        .btn-outline { border: 1px solid #2D3A5E; transition: all 0.2s; }
+        .btn-outline:hover { background: #1E293B; border-color: #F7931A; }
+        .market-card { transition: transform 0.2s, box-shadow 0.2s; }
+        .market-card:hover { transform: translateY(-3px); box-shadow: 0 20px 25px -12px rgba(0,0,0,0.5); }
+    </style>
+</head>
+<body class="text-gray-200">
+
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        
+        <!-- SECTION AUTH (SI NON CONNECTE) -->
+        <div id="authSection" class="mb-8 p-6 card-gradient rounded-2xl max-w-md mx-auto">
+            <div id="loginForm">
+                <h2 class="text-xl font-bold mb-4 text-[#F7931A]">Connexion BitSport</h2>
+                <div class="space-y-4">
+                    <input type="email" id="loginEmail" placeholder="Email" class="w-full bg-gray-900 border border-gray-700 rounded-xl px-4 py-2 text-sm">
+                    <input type="password" id="loginPass" placeholder="Mot de passe" class="w-full bg-gray-900 border border-gray-700 rounded-xl px-4 py-2 text-sm">
+                    <button onclick="handleLogin()" class="btn-primary w-full rounded-xl py-2 font-bold text-white shadow-lg">Se connecter</button>
+                    <p class="text-xs text-center text-gray-400">
+                        Pas de compte ? <a href="#" onclick="toggleAuth('register')" class="text-[#F7931A] hover:underline">Créer un compte</a>
+                    </p>
+                </div>
+            </div>
+            <div id="registerForm" class="hidden">
+                <h2 class="text-xl font-bold mb-4 text-[#F7931A]">Inscription BitSport</h2>
+                <div class="space-y-4">
+                    <input type="text" id="regUser" placeholder="Pseudo" class="w-full bg-gray-900 border border-gray-700 rounded-xl px-4 py-2 text-sm">
+                    <input type="email" id="regEmail" placeholder="Email" class="w-full bg-gray-900 border border-gray-700 rounded-xl px-4 py-2 text-sm">
+                    <input type="password" id="regPass" placeholder="Mot de passe" class="w-full bg-gray-900 border border-gray-700 rounded-xl px-4 py-2 text-sm">
+                    <button onclick="handleRegister()" class="btn-primary w-full rounded-xl py-2 font-bold text-white shadow-lg">S'inscrire</button>
+                    <p class="text-xs text-center text-gray-400">
+                        Déjà un compte ? <a href="#" onclick="toggleAuth('login')" class="text-[#F7931A] hover:underline">Se connecter</a>
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- APP CONTENT (CACHE PAR DEFAUT) -->
+        <div id="appContent" class="hidden">
+            <!-- HEADER avec wallet Bitcoin -->
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8 pb-4 border-b border-gray-800">
+                <div class="flex items-center gap-3">
+                    <div class="bg-[#F7931A] w-10 h-10 rounded-xl flex items-center justify-center shadow-lg">
+                        <i class="fab fa-bitcoin text-white text-2xl"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-2xl md:text-3xl font-bold tracking-tight bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent">BitSport <span class="text-[#F7931A]">Market</span></h1>
+                        <p class="text-sm text-gray-400">Paiements en Bitcoin ⚡ <span id="userNameDisplay" class="text-white ml-2 font-bold"></span></p>
+                    </div>
+                </div>
+                <div class="flex flex-wrap items-center gap-4">
+                    <div class="card-gradient rounded-2xl px-5 py-2.5 shadow-md">
+                        <div class="text-xs text-gray-400 uppercase tracking-wide">Solde Bitcoin</div>
+                        <div class="flex items-center gap-2">
+                            <i class="fab fa-bitcoin text-[#F7931A] text-xl"></i>
+                            <span class="text-2xl font-bold font-mono" id="btcBalanceDisplay">0.00000000</span>
+                            <span class="text-sm text-gray-400">BTC</span>
+                            <span class="text-xs bg-gray-800 rounded-full px-2 py-0.5 ml-1" id="satsBalanceDisplay">0 sats</span>
+                        </div>
+                    </div>
+                    <button id="resetDemoBtn" onclick="handleDemoReset()" class="btn-outline rounded-xl px-4 py-2 text-sm font-medium flex items-center gap-2">
+                        <i class="fas fa-sync-alt"></i> Réinitialiser démo
+                    </button>
+                    <button id="addFundsBtn" onclick="handleAddFunds()" class="btn-outline rounded-xl px-4 py-2 text-sm font-medium flex items-center gap-2 text-[#F7931A] border-[#F7931A]/40">
+                        <i class="fas fa-plus-circle"></i> + 50k sats
+                    </button>
+                    <button onclick="handleLogout()" class="text-gray-500 hover:text-white transition text-sm">Déconnexion</button>
+                </div>
+            </div>
+
+            <!-- Section Marchés actifs -->
+            <div class="mb-10">
+                <div class="flex items-center gap-2 mb-5">
+                    <i class="fas fa-trophy text-[#F7931A] text-xl"></i>
+                    <h2 class="text-xl font-semibold">Marchés sportifs 🇧🇫</h2>
+                </div>
+                <div id="marketsContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+            </div>
+
+            <!-- Section positions actives -->
+            <div class="mt-8">
+                <div class="flex items-center gap-2 mb-4">
+                    <i class="fas fa-receipt text-[#F7931A]"></i>
+                    <h2 class="text-xl font-semibold">Mes positions ouvertes</h2>
+                </div>
+                <div id="positionsContainer" class="bg-[#0F172A]/60 rounded-2xl border border-gray-800 p-4 min-h-[120px]">
+                    <div class="text-center text-gray-500 py-6" id="noPositionsMsg">
+                        <i class="fas fa-chart-line mr-2"></i> Aucun pari actif.
+                    </div>
+                    <div id="positionsList" class="space-y-3"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pied de page -->
+        <div class="mt-12 pt-6 text-center text-xs text-gray-500 border-t border-gray-800">
+            <p>⚡ 1 part = 100 000 sats à la victoire.</p>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = "http://127.0.0.1:8000/api"; // URL de base du backend
+        let AUTH_TOKEN = localStorage.getItem("bitsport_token");
+        let IS_ADMIN = localStorage.getItem("bitsport_is_admin") === "true";
+
+        function toggleAuth(mode) {
+            const loginF = document.getElementById("loginForm");
+            const regF = document.getElementById("registerForm");
+            if (mode === 'register') {
+                loginF.classList.add("hidden");
+                regF.classList.remove("hidden");
+            } else {
+                loginF.classList.remove("hidden");
+                regF.classList.add("hidden");
+            }
+        }
+
+        async function handleRegister() {
+            const username = document.getElementById("regUser").value;
+            const email = document.getElementById("regEmail").value;
+            const password = document.getElementById("regPass").value;
+
+            if (!username || !email || !password) {
+                showToast("Veuillez remplir tous les champs", "error");
+                return;
+            }
+
+            try {
+                const res = await fetch(`${API_URL}/auth/register`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, email, password })
+                });
+                const data = await res.json();
+
+                if (res.ok) {
+                    // SUCCÈS : On connecte l'utilisateur immédiatement sans repasser par le formulaire
+                    showToast("Bienvenue sur BitSport !", "success");
+                    await handleLogin(email, password); 
+                } else {
+                    let errorMsg = "Erreur lors de l'inscription";
+                    if (data.email) errorMsg = "Email : " + data.email[0];
+                    else if (data.username) errorMsg = "Pseudo : " + data.username[0];
+                    else if (data.password) errorMsg = "Mot de passe : " + data.password[0];
+                    showToast(errorMsg, "error");
+                }
+            } catch(e) {
+                showToast("Erreur de connexion au serveur", "error");
+            }
+        }
+
+        // UI Helpers
+        function formatBTC(sats) { return (sats / 100000000).toFixed(8); }
+        function formatSats(sats) { return sats.toLocaleString('fr-FR') + " sats"; }
+        function showToast(msg, type = "info") {
+            const toast = document.createElement("div");
+            toast.className = `fixed bottom-5 right-5 z-50 px-5 py-3 rounded-xl shadow-2xl text-sm font-medium transition-all duration-300 ${type === "success" ? "bg-green-800 text-green-100" : "bg-gray-800 text-gray-200 border-l-4 border-[#F7931A]"}`;
+            toast.innerText = msg;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+        }
+
+        // --- AUTH : CONNEXION ---
+        async function handleLogin(providedEmail, providedPassword) {
+            // Si on vient de l'inscription, on utilise les paramètres, sinon les champs du formulaire
+            const email = providedEmail || document.getElementById("loginEmail").value;
+            const password = providedPassword || document.getElementById("loginPass").value;
+
+            if (!email || !password) {
+                showToast("Veuillez saisir vos identifiants", "error");
+                return;
+            }
+
+            try {
+                const res = await fetch(`${API_URL}/auth/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
+                const data = await res.json();
+
+                if (res.ok) {
+                    // Mise à jour des variables globales et du stockage
+                    AUTH_TOKEN = data.token;
+                    IS_ADMIN = data.isAdmin;
+                    localStorage.setItem("bitsport_token", data.token);
+                    localStorage.setItem("bitsport_is_admin", data.isAdmin);
+                    localStorage.setItem("bitsport_username", data.username);
+                    
+                    // On force l'affichage immédiat
+                    document.getElementById("authSection").classList.add("hidden");
+                    document.getElementById("appContent").classList.remove("hidden");
+                    document.getElementById("userNameDisplay").innerText = data.username;
+                    
+                    showToast("Connexion réussie !", "success");
+                    
+                    // Lancement du chargement des données
+                    refreshData();
+                    // On s'assure qu'un seul intervalle tourne
+                    if (window.refreshInterval) clearInterval(window.refreshInterval);
+                    window.refreshInterval = setInterval(refreshData, 30000);
+                } else {
+                    showToast(data.error || data.detail || "Email ou mot de passe incorrect", "error");
+                }
+            } catch(e) {
+                showToast("Erreur lors de la connexion au backend", "error");
+            }
+        }
+
+        function handleLogout() {
+            localStorage.clear();
+            location.reload();
+        }
+
+        // --- DATA FETCHING ---
+        async function apiFetch(endpoint, options = {}) {
+            const headers = {
+                'Authorization': `Bearer ${AUTH_TOKEN}`,
+                'Content-Type': 'application/json',
+                ...options.headers
+            };
+            const res = await fetch(`${API_URL}/${endpoint}`, { ...options, headers });
+            if (res.status === 401) handleLogout();
+            return res;
+        }
+
+        async function refreshData() {
+            try {
+                // Solde
+                const balRes = await apiFetch("wallet/balance");
+                const balData = await balRes.json();
+                if (balRes.ok) {
+                    document.getElementById("btcBalanceDisplay").innerText = formatBTC(balData.balanceSats);
+                    document.getElementById("satsBalanceDisplay").innerText = formatSats(balData.balanceSats);
+                }
+
+                // Marchés
+                const marketsRes = await apiFetch("markets");
+                const marketsData = await marketsRes.json();
+                if (marketsRes.ok) renderMarkets(marketsData.markets);
+
+                // Positions
+                const posRes = await apiFetch("positions");
+                const posData = await posRes.json();
+                if (posRes.ok) renderPositions(posData.positions);
+
+            } catch(e) { console.error("Refresh error", e); }
+        }
+
+        // --- ACTIONS ---
+        async function buyShares(marketId, outcomeIdx, shares) {
+            const res = await apiFetch("orders", {
+                method: 'POST',
+                body: JSON.stringify({ marketId, outcomeIdx, shares })
+            });
+            const data = await res.json();
+            if (res.ok) {
+                showToast("✅ Achat réussi !", "success");
+                refreshData();
+            } else {
+                showToast(data.error || "Erreur lors de l'achat", "error");
+            }
+        }
+
+        async function handleResolve(marketId, winnerIdx) {
+            if (!confirm("Résoudre ce marché ?")) return;
+            const res = await apiFetch(`markets/${marketId}/resolve`, {
+                method: 'POST',
+                body: JSON.stringify({ winnerIdx })
+            });
+            const data = await res.json();
+            if (res.ok) {
+                showToast("🏆 Marché résolu !", "success");
+                refreshData();
+            } else {
+                showToast(data.error || "Action réservée aux admins", "error");
+            }
+        }
+
+        async function handleAddFunds() {
+            const res = await apiFetch("wallet/deposit", {
+                method: 'POST',
+                body: JSON.stringify({ amountSats: 50000 })
+            });
+            if (res.ok) {
+                showToast("💰 +50,000 sats ajoutés", "success");
+                refreshData();
+            }
+        }
+
+        async function handleDemoReset() {
+            if (!confirm("Reset complet ?")) return;
+            const res = await apiFetch("../demo/reset", { method: 'POST' });
+            if (res.ok) {
+                showToast("🔄 Démo réinitialisée", "success");
+                refreshData();
+            }
+        }
+
+        // --- RENDERING ---
+        function renderMarkets(markets) {
+            const container = document.getElementById("marketsContainer");
+            container.innerHTML = "";
+            markets.forEach(m => {
+                const card = document.createElement("div");
+                card.className = "card-gradient rounded-2xl overflow-hidden shadow-lg market-card";
+                card.innerHTML = `
+                    <div class="p-5 border-b border-gray-800">
+                        <div class="flex justify-between items-start">
+                            <h3 class="font-bold text-lg">${m.title}</h3>
+                            <span class="${m.resolved ? 'bg-gray-800' : 'bg-[#F7931A]/20 text-[#F7931A]'} text-xs px-2 py-1 rounded-full">
+                                ${m.resolved ? 'Résolu' : 'Actif'}
+                            </span>
+                        </div>
+                    </div>
+                    <div class="p-5 space-y-4">
+                        ${!m.resolved ? `
+                            <div class="bg-gray-900/50 rounded-xl p-3 border border-gray-700">
+                                <div class="flex justify-between items-center mb-2">
+                                    <span>${m.option_a}</span>
+                                    <span class="text-[#F7931A] font-bold">${m.price_a_sats.toLocaleString()} sats</span>
+                                </div>
+                                <div class="flex gap-2">
+                                    <input type="number" id="qtyA_${m.id}" value="1" min="1" class="w-16 bg-gray-800 rounded px-2 text-sm">
+                                    <button onclick="buyShares('${m.id}', 0, parseInt(document.getElementById('qtyA_${m.id}').value))" class="flex-1 bg-[#F7931A]/10 text-[#F7931A] border border-[#F7931A]/30 rounded-lg py-1 text-sm">Acheter</button>
+                                </div>
+                            </div>
+                            <div class="bg-gray-900/50 rounded-xl p-3 border border-gray-700">
+                                <div class="flex justify-between items-center mb-2">
+                                    <span>${m.option_b}</span>
+                                    <span class="text-[#F7931A] font-bold">${m.price_b_sats.toLocaleString()} sats</span>
+                                </div>
+                                <div class="flex gap-2">
+                                    <input type="number" id="qtyB_${m.id}" value="1" min="1" class="w-16 bg-gray-800 rounded px-2 text-sm">
+                                    <button onclick="buyShares('${m.id}', 1, parseInt(document.getElementById('qtyB_${m.id}').value))" class="flex-1 bg-[#F7931A]/10 text-[#F7931A] border border-[#F7931A]/30 rounded-lg py-1 text-sm">Acheter</button>
+                                </div>
+                            </div>
+                            ${IS_ADMIN ? `
+                            <div class="flex gap-2 pt-2">
+                                <button onclick="handleResolve('${m.id}', 0)" class="flex-1 text-[10px] bg-gray-800 py-1 rounded">🏆 ${m.option_a}</button>
+                                <button onclick="handleResolve('${m.id}', 1)" class="flex-1 text-[10px] bg-gray-800 py-1 rounded">🏆 ${m.option_b}</button>
+                            </div>` : ''}
+                        ` : `
+                            <div class="text-center py-4 bg-gray-800/40 rounded-xl">
+                                <p class="text-xs text-gray-500 uppercase">Gagnant</p>
+                                <p class="text-[#F7931A] font-bold">${m.winner_idx === 0 ? m.option_a : m.option_b}</p>
+                            </div>
+                        `}
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function renderPositions(positions) {
+            const list = document.getElementById("positionsList");
+            const empty = document.getElementById("noPositionsMsg");
+            list.innerHTML = "";
+            if (positions.length === 0) { empty.classList.remove("hidden"); return; }
+            empty.classList.add("hidden");
+
+            positions.forEach(p => {
+                const div = document.createElement("div");
+                div.className = "bg-gray-900/60 rounded-xl p-4 border border-gray-700 flex justify-between";
+                div.innerHTML = `
+                    <div>
+                        <p class="font-bold">${p.marketTitle}</p>
+                        <p class="text-xs text-[#F7931A]">${p.outcomeName} • ${p.shares} parts</p>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-xs text-gray-500">Investi: ${formatSats(p.investedSats)}</p>
+                        <p class="text-sm text-green-400 font-mono">Max: ${formatSats(p.potentialPayoutSats)}</p>
+                    </div>
+                `;
+                list.appendChild(div);
+            });
+        }
+
+        // --- INIT ---
+        function initApp() {
+            if (!AUTH_TOKEN) {
+                document.getElementById("authSection").classList.remove("hidden");
+                document.getElementById("appContent").classList.add("hidden");
+            } else {
+                document.getElementById("authSection").classList.add("hidden");
+                document.getElementById("appContent").classList.remove("hidden");
+                document.getElementById("userNameDisplay").innerText = localStorage.getItem("bitsport_username");
+                refreshData();
+                setInterval(refreshData, 30000); // Auto refresh toutes les 30s
+            }
+        }
+
+        window.onload = initApp;
+    </script>
+</body>
+</html>
