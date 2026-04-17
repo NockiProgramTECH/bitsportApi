@@ -126,5 +126,5 @@ CORS_ALLOWED_ORIGINS = [
 ]
 
 # Paramètres métier BitSport
-PAYOUT_PER_SHARE_SATS = config('PAYOUT_PER_SHARE_SATS', default=100000, cast=int)
+PAYOUT_PER_SHARE_SATS = config('PAYOUT_PER_SHARE_SATS', default=10000, cast=int)
 DEMO_INITIAL_BALANCE_SATS = config('DEMO_INITIAL_BALANCE_SATS', default=1000000, cast=int)

@@ -28,11 +28,19 @@ class OrderSerializer(serializers.ModelSerializer):
         fields = (
             'orderId', 'marketId', 'outcomeIdx', 'shares',
             'pricePaidPerShare_sats', 'totalCostSats',
-            'status', 'createdAt', 'settledAt',
+            'status', 'is_on_sale', 'sale_price_sats', 'createdAt', 'settledAt',
         )
 
     def get_totalCostSats(self, obj):
         return obj.total_cost_sats
+
+
+class SellOrderSerializer(serializers.Serializer):
+    salePriceSats = serializers.IntegerField(min_value=1)
+
+
+class BuyOrderSerializer(serializers.Serializer):
+    orderId = serializers.UUIDField()
 
 
 class PositionSerializer(serializers.ModelSerializer):

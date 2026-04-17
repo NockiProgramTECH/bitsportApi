@@ -9,7 +9,10 @@ from rest_framework.throttling import UserRateThrottle
 from apps.authentication.models import User
 from apps.markets.models import Market
 from .models import Order
-from .serializers import PlaceOrderSerializer, OrderSerializer, PositionSerializer
+from .serializers import (
+    PlaceOrderSerializer, OrderSerializer, PositionSerializer,
+    SellOrderSerializer, BuyOrderSerializer
+)
 
 
 class OrdersThrottle(UserRateThrottle):
@@ -77,6 +80,14 @@ class OrderListCreateView(APIView):
         # Débiter le solde
         User.objects.filter(pk=user.pk).update(balance_sats=F('balance_sats') - total_cost)
 
+        # Mettre à jour les votes et recalculer les prix (avec lock)
+        market = Market.objects.select_for_update().get(pk=market_id)
+        if outcome_idx == 0:
+            market.votes_a += shares
+        else:
+            market.votes_b += shares
+        market.update_prices()
+
         # Créer l'ordre
         order = Order.objects.create(
             user=user,
@@ -112,3 +123,70 @@ class PositionsView(APIView):
             .select_related('market')
         )
         return Response({'positions': PositionSerializer(positions, many=True).data})
+
+
+class OrderSellView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    @transaction.atomic
+    def post(self, request, order_id):
+        try:
+            order = Order.objects.select_for_update().get(pk=order_id, user=request.user)
+        except Order.DoesNotExist:
+            return Response({'error': 'Ordre introuvable.'}, status=status.HTTP_404_NOT_FOUND)
+
+        if order.status != 'open':
+            return Response({'error': 'Impossible de vendre un ordre résolu.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        serializer = SellOrderSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        order.is_on_sale = True
+        order.sale_price_sats = serializer.validated_data['salePriceSats']
+        order.save()
+
+        return Response(OrderSerializer(order).data)
+
+
+class OrderBuyView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    @transaction.atomic
+    def post(self, request, order_id):
+        try:
+            order = Order.objects.select_for_update().get(pk=order_id, is_on_sale=True)
+        except Order.DoesNotExist:
+            return Response({'error': 'Ordre à vendre introuvable.'}, status=status.HTTP_404_NOT_FOUND)
+
+        if order.user == request.user:
+            return Response({'error': 'Vous ne pouvez pas acheter votre propre ordre.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # On utilise une transaction atomique et select_for_update pour la sécurité
+        buyer = User.objects.select_for_update().get(pk=request.user.pk)
+        seller = User.objects.select_for_update().get(pk=order.user_id)
+        
+        total_cost = order.sale_price_sats
+
+        if buyer.balance_sats < total_cost:
+            return Response({'error': 'Solde insuffisant pour cet achat.'}, status=status.HTTP_402_PAYMENT_REQUIRED)
+
+        # Transférer les fonds
+        User.objects.filter(pk=buyer.pk).update(balance_sats=F('balance_sats') - total_cost)
+        User.objects.filter(pk=seller.pk).update(balance_sats=F('balance_sats') + total_cost)
+
+        # Transférer l'ordre
+        order.user = buyer
+        order.is_on_sale = False
+        order.sale_price_sats = None
+        order.save()
+
+        return Response(OrderSerializer(order).data)
+
+
+class SecondaryMarketListView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        qs = Order.objects.filter(is_on_sale=True, status='open').select_related('market')
+        return Response({'orders': OrderSerializer(qs, many=True).data})

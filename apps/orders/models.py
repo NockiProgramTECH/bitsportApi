@@ -25,6 +25,8 @@ class Order(models.Model):
     shares = models.IntegerField()
     price_per_share_sats = models.IntegerField()
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='open')
+    is_on_sale = models.BooleanField(default=False)
+    sale_price_sats = models.IntegerField(null=True, blank=True)
     settled_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 

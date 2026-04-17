@@ -7,21 +7,24 @@ class MarketSerializer(serializers.ModelSerializer):
         model = Market
         fields = (
             'id', 'title', 'event_date', 'option_a', 'option_b',
-            'price_a_sats', 'price_b_sats', 'resolved', 'winner_idx', 'created_at',
+            'price_a_sats', 'price_b_sats', 'votes_a', 'votes_b',
+            'resolved', 'winner_idx', 'created_at',
         )
 
 
 class MarketCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Market
-        fields = ('id', 'title', 'event_date', 'option_a', 'option_b', 'price_a_sats', 'price_b_sats')
+        fields = ('id', 'title', 'event_date', 'option_a', 'option_b')
 
-    def validate(self, data):
-        if data['price_a_sats'] + data['price_b_sats'] != 100000:
-            raise serializers.ValidationError(
-                "La somme price_a_sats + price_b_sats doit être égale à 100 000 sats."
-            )
-        return data
+    def create(self, validated_data):
+        from django.conf import settings
+        payout = getattr(settings, 'PAYOUT_PER_SHARE_SATS', 10000)
+        # Par défaut, cote = 10 donc prix = payout / 10
+        default_price = payout // 10
+        validated_data['price_a_sats'] = default_price
+        validated_data['price_b_sats'] = default_price
+        return super().create(validated_data)
 
 
 class ResolveMarketSerializer(serializers.Serializer):
